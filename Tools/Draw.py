@@ -29,8 +29,8 @@ with open(solutionfilepath, newline='') as csvfile:
     rowReader = csv.reader(csvfile, delimiter=',')
     rowNumber = 0
     for row in rowReader: 
-        #linesSolution1.append( [coordinates[rowNumber], coordinates[int(row[0])]] )
-        #linesSolution2.append( [coordinates[rowNumber], coordinates[int(row[1])]] )
+        linesSolution1.append( [coordinates[rowNumber], coordinates[int(row[0])]] )
+        linesSolution2.append( [coordinates[rowNumber], coordinates[int(row[1])]] )
         rowNumber += 1
 
 lc = LineCollection(linesSolution1)
