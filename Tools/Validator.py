@@ -3,7 +3,7 @@ import sys
 import math
 
 if len(sys.argv) != 3:
-	print("Give Coordinates and solution. E.g. python Draw.py 1000 Output1000.csv")
+	print("Give Coordinates and solution. E.g. python ValiDator.py input1000.csv Output1000.csv")
 	sys.exit(1)
 
 

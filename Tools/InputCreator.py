@@ -5,7 +5,7 @@ import math
 import sys
 
 if len(sys.argv) != 2:
-	print("Give size of case. E.g. python dago.py 1000")
+	print("Give size of case. E.g. python InputCreator.py 1000")
 	sys.exit(1)
 
 

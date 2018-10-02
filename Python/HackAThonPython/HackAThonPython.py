@@ -25,6 +25,13 @@ def GetCoordinates():
             
     return coordinates
 
+def SaveSolutions( solution1, solution2 ):
+    with open('outputfor%s'%coordinatesfilepath, 'w', newline='') as csvfile:
+        solutionwriter = csv.writer(csvfile, delimiter=',')
+        for i in range(0,len(solution1)):
+            solutionwriter.writerow( [solution1[i].next, solution2[i].next] )
+
+
 def GetDistanceMatrix(coordinates):
     distanceMatrix = [[0 for x in range(len(coordinates))] for y in range(len(coordinates))]
     for i in range(0,len(coordinates)):
@@ -36,18 +43,22 @@ def GetDistanceMatrix(coordinates):
 def CheckSolution( Solution1, Solution2 ):
     nodeVisitid1 = set([])
     currentNode = 0
+    feasible = True
     while (True):
         if currentNode in nodeVisitid1:
             print ( "not feasible: Node %s is visited twice in solution 1"%currentNode)
+            feasible = False
         nodeVisitid1.add(currentNode)
         nextNode = Solution1[currentNode].next
         if Solution2[currentNode].next == nextNode or Solution2[nextNode].next == currentNode:
             print("not feasible: Arc from node %s to node %s is in both solutions"%(currentNode, nextNode) )
+            feasible = False
 
         currentNode = nextNode
         if (currentNode == 0):
             break
     if len(nodeVisitid1) != len(Solution1):
+        feasible = False
         print("not feasible: The following nodes are not visited in solution 1: ")
         for node in range(0,len(Solution1)):
             if node not in nodeVisitid1:
@@ -60,6 +71,7 @@ def CheckSolution( Solution1, Solution2 ):
 
     while (True):
         if currentNode in nodeVisitid2:
+            feasible = False
             print ( "not feasible: Node %s is visited twice in solution 2"%currentNode)
         nodeVisitid2.add(currentNode)
         nextNode = Solution2[currentNode].next
@@ -69,10 +81,13 @@ def CheckSolution( Solution1, Solution2 ):
         if (currentNode == 0):
             break
     if len(nodeVisitid2) != len(Solution2):
+        feasible = False
         print("not feasible: The following nodes are not visited in solution 2: ")
         for node in range(0,len(Solution2)):
             if node not in nodeVisitid2:
                 print(node)
+
+    return feasible
 
 
 def InsertNodeAt( solution, insertAfterNode, InsertNode):
@@ -140,8 +155,11 @@ def main():
     solution1[0].inSolution = True
     solution2[0].inSolution = True
     Algorithm(solution1, solution2, distanceMatrix)
-    RemoveNode(solution1, 5)
-    CheckSolution(solution1,solution2)
+    feasible = CheckSolution(solution1,solution2)
+
+    if feasible:
+        SaveSolutions( solution1, solution2 )
+
     print("finished")
 
 
