@@ -5,7 +5,7 @@ import csv
 import sys
 
 if len(sys.argv) != 3:
-	print("Give Coordinates and solution. E.g. python Draw.py 1000 Output1000.csv")
+	print("Give Coordinates and solution. E.g. python Draw.py input1000 Output1000.csv")
 	sys.exit(1)
 
 coordinatesfilepath = sys.argv[1]
