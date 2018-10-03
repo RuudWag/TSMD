@@ -7,8 +7,64 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
 
+
+
+
 namespace Hackaton_Template_CSharp
 {
+    public class Node
+    {
+        private int next = 0;
+        private int prev = 0;
+        private bool inSolution = false;
+
+        public int Next { get { return next; } set { next = value; } }
+        public int Prev { get { return prev; } set { prev = value;  } }
+        public bool InSolution { get { return inSolution; } set { inSolution = value; } }
+    }
+    class SolutionModifiers {
+        public void InsertNodeAt(List<Node> io_route, int i_insertAfterNode, int i_insertNode)
+        {
+            if (io_route[i_insertAfterNode].InSolution && !io_route[i_insertNode].InSolution)
+            {
+                int NodeAfterInstertedNode = io_route[i_insertAfterNode].Next;
+                io_route[i_insertAfterNode].Next = i_insertNode;
+                io_route[NodeAfterInstertedNode].Prev = i_insertNode;
+
+                io_route[i_insertNode].Prev = i_insertAfterNode;
+                io_route[i_insertNode].Next = NodeAfterInstertedNode;
+
+                io_route[i_insertNode].InSolution = true;
+            }
+            else
+            {
+                if (!io_route[i_insertAfterNode].InSolution)
+                {
+                    Console.Write(string.Format("tried to insert after node {0},but it is not in the solution ", i_insertAfterNode));
+                }
+                else
+                {
+                    Console.Write(string.Format("tried to insert after node {0},but it is already in the solution ", i_insertNode));
+                }
+            }
+        }
+
+        public void RemoveNode(List<Node> io_route, int i_removeNode )
+        {
+	        if (io_route[i_removeNode].InSolution )
+	        {
+		        int prevNode = io_route[i_removeNode].Prev;
+                int nextNode = io_route[i_removeNode].Next;
+                io_route[prevNode].Next = nextNode;
+		        io_route[nextNode].Prev = prevNode;
+		        io_route[i_removeNode].InSolution = false;
+	        }
+	        else
+	        {
+                Console.Write(string.Format("tried to remove node {0} ,but it is not in the solution ", i_removeNode));
+	        }
+        }
+    }
     // All console commands must be in the sub-namespace Commands: 
     namespace ConsoleApplicationBase.Commands
     {
@@ -17,8 +73,8 @@ namespace Hackaton_Template_CSharp
         {
             public static List<Coordinate> _coordinates = new List<Coordinate>();
 
-            private static List<int> _route1 = new List<int>();
-            private static List<int> _route2 = new List<int>();
+            private static List<Node> _route1;
+            private static List<Node> _route2;
          
             public static string ReadData(string path)
             {
@@ -50,8 +106,22 @@ namespace Hackaton_Template_CSharp
                     }
                 }
 
+                _route1 = new List<Node>(_coordinates.Count);
+                _route2 = new List<Node>(_coordinates.Count);
+                for ( int i = 0; i< _coordinates.Count; i++)
+                {
+                    _route1.Add(new Node());
+                    _route2.Add(new Node());
+                }
+                
+                _route1[0].InSolution = true;
+                _route2[0].InSolution = true;
+
                 return string.Format("Reading data was successful. The .csv file consisted of {0} lines.", _coordinates.Count);
             }
+
+           
+
 
             public static string CalculateSolution()
             {
@@ -60,19 +130,46 @@ namespace Hackaton_Template_CSharp
                 {
                     return "No coordinates have been loaded, you fool.";
                 }
-
+                var solutionModifier = new SolutionModifiers();
                 // ============================ GO FOR IT===============================
-                _route1.Add(_coordinates.Count - 1);
-                for (int i = 0; i < _coordinates.Count-1; i++)
-                {
-                    _route1.Add(i);
-                }
 
-                _route2.Add(_coordinates.Count - 2);
-                _route2.Add(_coordinates.Count - 1);
-                for (int i = 0; i < _coordinates.Count-2; i++)
+                //initial random insert
+                int insertAfterNode = 0;
+                List<int> nodesToInsert = new List<int>();
+                for (int indexNode = 1; indexNode < _route1.Count; indexNode++)
                 {
-                    _route2.Add(i);
+                    nodesToInsert.Add(indexNode);
+                }
+                foreach (var node in nodesToInsert)
+                {
+                    solutionModifier.InsertNodeAt(_route1, insertAfterNode, node);
+                    insertAfterNode = node;
+                }
+                insertAfterNode = 0;
+                int middlePoint = (int)Math.Ceiling(((double)(nodesToInsert.Count - 1) / 2.0));
+                int left = 0;
+                int right = nodesToInsert.Count - 1;
+                solutionModifier.InsertNodeAt(_route2, insertAfterNode, nodesToInsert[middlePoint]);
+                insertAfterNode = nodesToInsert[middlePoint];
+                bool insertLeft = true;
+
+                while (!(left == middlePoint && right == middlePoint))
+                {
+                    int insertNode;
+                    if (insertLeft)
+                    {
+                        insertNode = nodesToInsert[left];
+                        left++;
+                    }
+                    else
+                    {
+                        insertNode = nodesToInsert[right];
+
+                        right--;
+                    }
+                    solutionModifier.InsertNodeAt(_route2, insertAfterNode, insertNode);
+                    insertAfterNode = insertNode;
+                    insertLeft = !insertLeft;
                 }
 
                 // ============================ GO FOR IT===============================
@@ -81,65 +178,92 @@ namespace Hackaton_Template_CSharp
 
             public static string CheckSolution()
             {
-                // Sanity check
-                if (_route1.Count == 0 || _route2.Count == 0)
+                SortedSet<int> nodesVisited1 = new SortedSet<int>();                
+                int currentNode = 0;
+                bool feasible = true;
+                do
                 {
-                    return "No solution have been calculated, you fool.";
-                }
-
-                // Check Scrooge criteria
-                if(_route1.Count != _coordinates.Count || _route2.Count != _coordinates.Count)
-                {
-                    return "One or both solution routes are too short.";
-                }
-
-                int nofHops = 0;
-                for (int i = 0; i < _coordinates.Count; i++)
-                {
-                    if (_route1[i] == i || _route2[i] == i)
-                    {
-                        return string.Format("Route node points to itself. Route1: {0}, Route2: {1}", _route1[i], _route2[i]);
+                    if ( nodesVisited1.Contains(currentNode))
+                    {                       
+                        return String.Format("not feasible: Node {0} is visited twice in solution 1",currentNode);
                     }
+                    nodesVisited1.Add(currentNode);
 
-                    if (_route1[i] >= _route2.Count || _route2[i] >= _route1.Count)
+                    int nextNode = _route1[currentNode].Next;
+                    if (_route2[currentNode].Prev == nextNode || _route2[currentNode].Next == nextNode)
                     {
-                        return string.Format("ID was out of bound. Route1: {0}, Route2: {1}", _route1[i], _route2[i]);
+                        Console.WriteLine(String.Format("not feasible: Arc from node {0} to node {1} is in both solutions", currentNode, nextNode));
+                        feasible = false;
                     }
+                    currentNode = _route1[currentNode].Next;
+                } while (currentNode != 0);
 
-                    if (_route1[i] == _route2[i] || _route2[_route2[i]] == i)
-                    {
-                        return string.Format("Solution contains similar edge. {0} <--> {1}", i, _route1[i]);
-                    }
-                    nofHops++;
-                }
-                if (nofHops != _route1.Count)
+                if (nodesVisited1.Count != _route1.Count)
                 {
-                    return string.Format("Solution only consists of {0} edges.", nofHops);
-                }
+                    Console.WriteLine(String.Format("not feasible: The following nodes are not visited in solution 1: "));
+                    for (int node = 0; node < _route1.Count; node++)
+                    {
+                        if ( !nodesVisited1.Contains(node))
+                        {
+                            Console.WriteLine(String.Format("{0}", node));
 
-                // Calculating score.
-                double distance = 0;
+                        }
+                    }
+                    feasible = false;
+                }
+                SortedSet<int> nodesVisited2 = new SortedSet<int>();
+                currentNode = 0;
+                do
+                {
+                    if ( nodesVisited2.Contains(currentNode) )
+                    {
+                        return String.Format("not feasible: Node {0} is visited twice in solution 2", currentNode);
+                    }
+                    nodesVisited2.Add(currentNode);
+                    currentNode = _route2[currentNode].Next;
+                } while (currentNode != 0);
+
+                if (nodesVisited2.Count != _route2.Count)
+                {
+                    Console.WriteLine(String.Format("not feasible: The following nodes are not visited in solution 3: "));
+                    for (int node = 0; node < _route2.Count; node++)
+                    {
+                        if (!nodesVisited2.Contains(node))
+                        {
+                            Console.WriteLine(String.Format("{0}", node));
+                        }
+                    }
+                    feasible = false;
+                }                
+                return String.Format("Is Solution Feasible? {0}", feasible);
+            }
+
+            public static string CalculateDistance()
+            {
+                double distance1 = 0;
                 for (int i = 0; i < _route1.Count; i++)
                 {
-                    double x1 = _coordinates[_route1[i]].X;
-                    double x2 = _coordinates[_route1[_route1[i]]].X;
-                    double y1 = _coordinates[_route1[i]].Y;
-                    double y2 = _coordinates[_route1[_route1[i]]].Y;
+                    double x1 = _coordinates[i].X;
+                    double x2 = _coordinates[_route1[i].Next].X;
+                    double y1 = _coordinates[i].Y;
+                    double y2 = _coordinates[_route1[i].Next].Y;
 
-                    distance += Math.Sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+                    distance1 += Math.Sqrt(Math.Pow(x1 - x2,2) + Math.Pow(y1 - y2,2));
                 }
 
+                double distance2 = 0;
                 for (int i = 0; i < _route2.Count; i++)
                 {
-                    double x1 = _coordinates[_route2[i]].X;
-                    double x2 = _coordinates[_route2[_route2[i]]].X;
-                    double y1 = _coordinates[_route2[i]].Y;
-                    double y2 = _coordinates[_route2[_route2[i]]].Y;
+                    double x1 = _coordinates[i].X;
+                    double x2 = _coordinates[_route2[i].Next].X;
+                    double y1 = _coordinates[i].Y;
+                    double y2 = _coordinates[_route2[i].Next].Y;
 
-                    distance += Math.Sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+                    distance2 += Math.Sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
                 }
 
-                return string.Format("Checking solution data was successful. The total distance is {0}", distance);
+                return string.Format("The distance for route 1 is {0} and for route 2 {1}", distance1, distance2);
+
             }
 
             public static string SaveSolution(string path)
@@ -154,7 +278,7 @@ namespace Hackaton_Template_CSharp
 
                 for (int i = 0; i < _route1.Count; i++)
                 {
-                    var newLine = string.Format("{0},{1}", _route1[i],_route2[i]);
+                    var newLine = string.Format("{0},{1}", _route1[i].Next,_route2[i].Next);
                     tsw.Write(newLine);
                     tsw.Write(Environment.NewLine);
                 }
@@ -183,5 +307,7 @@ namespace Hackaton_Template_CSharp
                 return string.Format("{0},{1}", x, y);
             }
         }
+
+
     }
 }
