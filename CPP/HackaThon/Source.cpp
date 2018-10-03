@@ -188,13 +188,11 @@ void Algorithm( std::vector<Node>& io_solution1, std::vector<Node>& io_solution2
 	{
 		nodesToInsert.push_back( indexNode );
 	}
-	//std::random_shuffle( nodesToInsert.begin(), nodesToInsert.end() );
 	for ( auto node : nodesToInsert )
 	{
 		InsertNodeAt( io_solution1, insertAfterNode, node );
 		insertAfterNode = node;
 	}
-	//std::random_shuffle( nodesToInsert.begin(), nodesToInsert.end() );
 	insertAfterNode = 0;
 	size_t middlePoint = static_cast<size_t>( std::ceil( double( nodesToInsert.size() - 1 ) / 2.0 ) );
 	size_t left = 0;
