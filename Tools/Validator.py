@@ -51,7 +51,7 @@ while (True):
         break
 if len(nodeVisitid1) != NumberOfCoordinates:
     print("not feasible: The following nodes are not visited in solution 1: ")
-    for node in range(0,len(NumberOfCoordinates)):
+    for node in range(0,NumberOfCoordinates):
         if node not in nodeVisitid1:
             print(node)
 
@@ -74,7 +74,7 @@ while (True):
         break
 if len(nodeVisitid2) != NumberOfCoordinates:
     print("not feasible: The following nodes are not visited in solution 2: ")
-    for node in range(0,len(NumberOfCoordinates)):
+    for node in range(0,NumberOfCoordinates):
         if node not in nodeVisitid2:
             print(node)
 
